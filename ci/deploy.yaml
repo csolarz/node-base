@@ -1,0 +1,50 @@
+apiVersion: apps/v1beta1 # for versions before 1.7.0 use apps/v1beta1
+kind: Deployment
+metadata:
+  name: node-base-deploy
+  labels:
+    app: node-base-deploy
+spec:
+  replicas: 2
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: node-base-deploy
+  template:
+    metadata:
+      labels:
+        app: node-base-deploy
+    spec:
+      containers:
+      - name: node-base
+        image: node-base-acr.azurecr.io/node-base:#{Build.BuildId}#
+        env:
+## Azure key vault values:
+        - name: KV_SQL_SERVER_BD
+          value: "#{NODE-BASE-SQL-BD}#"
+        - name: KV_SQL_SERVER_HOST
+          value: "#{NODE-BASE-SQL-HOST}#"
+        - name: KV_SQL_SERVER_USER
+          value: "#{NODE-BASE-SQL-USER}#"
+        - name: KV_SQL_SERVER_PASSWORD
+          value: "#{NODE-BASE-SQL-PASSWORD}#"
+        - name: KV_APPINSIGHTS_INSTRUMENTATION_KEY
+          value: "#{NODE-BASE-INSTRUMENTATION-KEY}#"
+        - name: KV_SECRET_ID
+          value: "#{NODE-BASE-SECRET-ID}#"
+        - name: KV_APP_ID
+          value: "#{NODE-BASE-APP-ID}#"
+## Hard-coded values:
+        - name: IS_LOCAL
+          value: "false"
+        - name: SESSION_TIMEOUT
+          value: "15"
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 3010
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      imagePullSecrets:
+        - name: azureregistry
