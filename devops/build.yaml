@@ -1,0 +1,48 @@
+pool:
+  name: Hosted Ubuntu 1604
+  demands: npm
+  
+steps:
+- task: NodeTool@0
+  displayName: 'Use Node 8.x'
+  inputs:
+    versionSpec: 8.x
+
+- task: Npm@1
+  displayName: 'npm install'
+  inputs:
+    verbose: false
+
+- task: Npm@1
+  displayName: 'run tests'
+  inputs:
+    command: custom
+    verbose: false
+    customCommand: ' run integration-test'
+
+- task: Docker@1
+  displayName: build
+  inputs:
+    azureSubscriptionEndpoint: 'subscription id'
+    azureContainerRegistry: node-base-acr.azurecr.io
+    dockerFile: Dockerfile
+    imageName: 'node-base:$(Build.BuildId)'
+    includeLatestTag: true
+
+- task: Docker@1
+  displayName: push
+  inputs:
+    azureSubscriptionEndpoint: 'subscription id'
+    azureContainerRegistry: node-base-acr.azurecr.io
+    command: 'Push an image'
+    imageName: 'node-base:$(Build.BuildId)'
+
+- task: CopyFiles@2
+  displayName: 'Copy deployment file'
+  inputs:
+    SourceFolder: ci
+    Contents: '*.yaml'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: output_files'
